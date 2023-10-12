@@ -1,5 +1,8 @@
-import aiohttp
 import asyncio
+
+import aiohttp
+
+from adapters.inosmi_ru import sanitize
 
 
 async def fetch(session, url):
@@ -10,8 +13,11 @@ async def fetch(session, url):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        html = await fetch(session, 'https://www.google.com/')
-        print(html)
+        html = await fetch(
+            session, "https://inosmi.ru/economic/20190629/245384784.html"
+        )
+        sanitized = sanitize(html)
+        print(sanitized)
 
 
 asyncio.run(main())
