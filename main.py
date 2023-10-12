@@ -1,4 +1,6 @@
 import asyncio
+import time
+from contextlib import asynccontextmanager
 from enum import Enum
 
 from aiohttp import ClientResponseError, ClientSession, InvalidURL
@@ -11,6 +13,7 @@ from adapters.inosmi_ru import sanitize
 from text_tools import calculate_jaundice_rate, split_by_words
 
 FETCH_TIMEOUT = 3
+PROCESSING_TIMEOUT = 0.01
 
 
 class ProcessingStatus(Enum):
@@ -25,6 +28,16 @@ async def fetch(session, url):
     async with session.get(url) as response:
         response.raise_for_status()
         return await response.text()
+
+
+@asynccontextmanager
+async def log_execution_time():
+    start_timestamp = time.monotonic()
+    try:
+        yield
+    finally:
+        processing_time = time.monotonic() - start_timestamp
+        print(f"Анализ закончен за {round(processing_time, 4)} сек")
 
 
 def get_charged_words():
@@ -49,10 +62,12 @@ async def process_article(
         try:
             async with timeout(FETCH_TIMEOUT):
                 html = await fetch(session, url)
-            sanitized_text = sanitize(html)
-            words = split_by_words(morph, sanitized_text)
-            rate = calculate_jaundice_rate(words, charged_words)
-            result["rate"] = rate
+            async with timeout(PROCESSING_TIMEOUT):
+                async with log_execution_time():
+                    sanitized_text = sanitize(html)
+                    words = split_by_words(morph, sanitized_text)
+                    rate = calculate_jaundice_rate(words, charged_words)
+                    result["rate"] = rate
         except (ClientResponseError, InvalidURL):
             result["status"] = ProcessingStatus.FETCH_ERROR.value
         except ArticleNotFound:
