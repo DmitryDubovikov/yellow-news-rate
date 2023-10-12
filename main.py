@@ -10,7 +10,7 @@ async def fetch(session, url):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        html = await fetch(session, 'http://example.com')
+        html = await fetch(session, 'https://www.google.com/')
         print(html)
 
 
