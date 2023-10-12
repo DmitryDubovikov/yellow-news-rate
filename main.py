@@ -1,13 +1,16 @@
 import asyncio
 from enum import Enum
 
-from aiohttp import ClientSession, InvalidURL, ClientResponseError
+from aiohttp import ClientResponseError, ClientSession, InvalidURL
 from anyio import create_task_group
+from async_timeout import timeout
 from pymorphy2 import MorphAnalyzer
 
-from adapters.inosmi_ru import sanitize
 from adapters.exceptions import ArticleNotFound
+from adapters.inosmi_ru import sanitize
 from text_tools import calculate_jaundice_rate, split_by_words
+
+FETCH_TIMEOUT = 3
 
 
 class ProcessingStatus(Enum):
@@ -44,7 +47,8 @@ async def process_article(
     result = {"rate": None, "url": url, "status": ProcessingStatus.OK}
     async with ClientSession() as session:
         try:
-            html = await fetch(session, url)
+            async with timeout(FETCH_TIMEOUT):
+                html = await fetch(session, url)
             sanitized_text = sanitize(html)
             words = split_by_words(morph, sanitized_text)
             rate = calculate_jaundice_rate(words, charged_words)
