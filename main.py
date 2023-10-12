@@ -13,7 +13,7 @@ from adapters.inosmi_ru import sanitize
 from text_tools import calculate_jaundice_rate, split_by_words
 
 FETCH_TIMEOUT = 3
-PROCESSING_TIMEOUT = 0.01
+PROCESSING_TIMEOUT = 5
 
 
 class ProcessingStatus(Enum):
@@ -65,7 +65,7 @@ async def process_article(
             async with timeout(PROCESSING_TIMEOUT):
                 async with log_execution_time():
                     sanitized_text = sanitize(html)
-                    words = split_by_words(morph, sanitized_text)
+                    words = await split_by_words(morph, sanitized_text)
                     rate = calculate_jaundice_rate(words, charged_words)
                     result["rate"] = rate
         except (ClientResponseError, InvalidURL):
