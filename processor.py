@@ -12,8 +12,8 @@ from adapters.exceptions import ArticleNotFound
 from adapters.inosmi_ru import sanitize
 from text_tools import calculate_jaundice_rate, split_by_words
 
-FETCH_TIMEOUT = 3
-PROCESSING_TIMEOUT = 5
+FETCH_TIMEOUT = 5
+PROCESSING_TIMEOUT = 10
 
 
 class ProcessingStatus(Enum):
@@ -57,7 +57,7 @@ def get_charged_words():
 async def process_article(
     results: list, url: str, morph: MorphAnalyzer, charged_words: list[str]
 ) -> None:
-    result = {"rate": None, "url": url, "status": ProcessingStatus.OK}
+    result = {"rate": None, "url": url, "status": ProcessingStatus.OK.value}
     async with ClientSession() as session:
         try:
             async with timeout(FETCH_TIMEOUT):
@@ -77,27 +77,16 @@ async def process_article(
         results.append(result)
 
 
-async def main():
+async def process(articles: list[str]) -> list[dict]:
     morph = MorphAnalyzer()
     charged_words = get_charged_words()
-
     results = []
 
-    test_articles = [
-        "https://inosmi.ru/economic/20190629/245384784.html",
-        "https://inosmi.ru/20231012/zelenskiy-266090827.html",
-        "https://inosmi.ru/20231012/es-266088279.html",
-        "https://inosmi.ru/20231012/yaponiya-266090719.html",
-        "https://inosmi.ru/20231012/finlyandiya-266094161.html",
-        "https://inosmi.ru/20231012/finl",
-        "https://lenta.ru/brief/2021/08/26/afg_terror/",
-    ]
-
     async with create_task_group() as tg:
-        for url in test_articles:
+        for url in articles:
             tg.start_soon(process_article, results, url, morph, charged_words)
 
-    print(*results, sep="\n")
+    return results
 
 
-asyncio.run(main())
+# asyncio.run(main())

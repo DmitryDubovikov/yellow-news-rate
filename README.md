@@ -37,3 +37,5 @@ python -m pytest text_tools.py
 # Цели проекта
 
 Код написан в учебных целях. Это урок из курса по веб-разработке — [Девман](https://dvmn.org).
+
+http://127.0.0.1:8080/?urls=https://inosmi.ru/economic/20190629/245384784.html,https://inosmi.ru/20231012/zelenskiy-266090827.html,https://inosmi.ru/20231012/finl,https://lenta.ru/brief/2021/08/26/afg_terror/

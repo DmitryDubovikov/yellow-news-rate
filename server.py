@@ -1,5 +1,7 @@
 from aiohttp import web
 
+from processor import process
+
 MAX_COUNT_OF_URLS = 10
 
 
@@ -11,7 +13,9 @@ async def handle(request):
         )
         return web.json_response({"error": error_message}, status=400)
 
-    return web.json_response(urls)
+    response_data = await process(urls)
+    # response_data = [1, 2, {"key": "value"}]
+    return web.json_response(response_data)
 
 
 app = web.Application()
