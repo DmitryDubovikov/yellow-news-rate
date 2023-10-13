@@ -14,7 +14,6 @@ async def handle(request):
         return web.json_response({"error": error_message}, status=400)
 
     response_data = await process(urls)
-    # response_data = [1, 2, {"key": "value"}]
     return web.json_response(response_data)
 
 
