@@ -2,14 +2,14 @@ from aiohttp import web
 
 from processor import process
 
-MAX_COUNT_OF_URLS = 10
+MAX_NUMBER_OF_URLS = 10
 
 
 async def handle(request):
     urls = request.query.get("urls", "").split(",")
-    if len(urls) > MAX_COUNT_OF_URLS:
+    if len(urls) > MAX_NUMBER_OF_URLS:
         error_message = (
-            f"too many urls in request, should be {MAX_COUNT_OF_URLS} or less"
+            f"too many urls in request, should be {MAX_NUMBER_OF_URLS} or less"
         )
         return web.json_response({"error": error_message}, status=400)
 
