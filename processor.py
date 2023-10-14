@@ -3,6 +3,7 @@ import time
 from contextlib import asynccontextmanager
 from enum import Enum
 
+import pytest
 from aiohttp import ClientResponseError, ClientSession, InvalidURL
 from anyio import create_task_group
 from async_timeout import timeout
@@ -90,3 +91,36 @@ async def process(articles: list[str]) -> list[dict]:
 
 
 # asyncio.run(main())
+@pytest.mark.asyncio
+async def test_process_article():
+    morph = MorphAnalyzer()
+    charged_words = get_charged_words()
+
+    async with ClientSession() as session:
+        results = []
+        url = "https://inosmi.ru/20211116/250914886.html"
+        await process_article(results, url, morph, charged_words)
+        assert len(results) == 1
+        result = results[0]
+        assert result["status"] == ProcessingStatus.OK.value
+        assert result["url"] == url
+        assert result["rate"] >= 0
+        assert result["rate"] <= 100
+
+        results = []
+        url = "https://inosmi.ru/article_does_not_exist.html"
+        await process_article(results, url, morph, charged_words)
+        assert len(results) == 1
+        result = results[0]
+        assert result["status"] == ProcessingStatus.FETCH_ERROR.value
+        assert result["url"] == url
+        assert result["rate"] is None
+
+        results = []
+        url = "https://www.bbc.com/news/world-middle-east-67084141"
+        await process_article(results, url, morph, charged_words)
+        assert len(results) == 1
+        result = results[0]
+        assert result["status"] == ProcessingStatus.PARSING_ERROR.value
+        assert result["url"] == url
+        assert result["rate"] is None
