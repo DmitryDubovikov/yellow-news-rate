@@ -16,6 +16,8 @@ from text_tools import calculate_jaundice_rate, split_by_words
 FETCH_TIMEOUT = 5
 PROCESSING_TIMEOUT = 10
 
+morph = MorphAnalyzer()
+
 
 class ProcessingStatus(Enum):
     OK = "OK"
@@ -55,9 +57,7 @@ def get_charged_words():
     return positive_words + negative_words
 
 
-async def process_article(
-    results: list, url: str, morph: MorphAnalyzer, charged_words: list[str]
-) -> None:
+async def process_article(results: list, url: str, charged_words: list[str]) -> None:
     result = {"rate": None, "url": url, "status": ProcessingStatus.OK.value}
     async with ClientSession() as session:
         try:
@@ -79,13 +79,12 @@ async def process_article(
 
 
 async def process(articles: list[str]) -> list[dict]:
-    morph = MorphAnalyzer()
     charged_words = get_charged_words()
     results = []
 
     async with create_task_group() as tg:
         for url in articles:
-            tg.start_soon(process_article, results, url, morph, charged_words)
+            tg.start_soon(process_article, results, url, charged_words)
 
     return results
 
@@ -93,13 +92,12 @@ async def process(articles: list[str]) -> list[dict]:
 # asyncio.run(main())
 @pytest.mark.asyncio
 async def test_process_article():
-    morph = MorphAnalyzer()
     charged_words = get_charged_words()
 
     async with ClientSession() as session:
         results = []
         url = "https://inosmi.ru/20211116/250914886.html"
-        await process_article(results, url, morph, charged_words)
+        await process_article(results, url, charged_words)
         assert len(results) == 1
         result = results[0]
         assert result["status"] == ProcessingStatus.OK.value
@@ -109,7 +107,7 @@ async def test_process_article():
 
         results = []
         url = "https://inosmi.ru/article_does_not_exist.html"
-        await process_article(results, url, morph, charged_words)
+        await process_article(results, url, charged_words)
         assert len(results) == 1
         result = results[0]
         assert result["status"] == ProcessingStatus.FETCH_ERROR.value
@@ -118,7 +116,7 @@ async def test_process_article():
 
         results = []
         url = "https://www.bbc.com/news/world-middle-east-67084141"
-        await process_article(results, url, morph, charged_words)
+        await process_article(results, url, charged_words)
         assert len(results) == 1
         result = results[0]
         assert result["status"] == ProcessingStatus.PARSING_ERROR.value
